@@ -9,6 +9,11 @@ export const revalidatePage: CollectionAfterChangeHook<Page> = ({
   previousDoc,
   req: { payload, locale },
 }) => {
+  // Skip revalidation in development to prevent HMR issues
+  if (process.env.NODE_ENV === 'development') {
+    return doc
+  }
+
   if (!locale && payload.config.localization) {
     locale = payload.config.localization.defaultLocale as Config['locale']
   }
@@ -19,6 +24,8 @@ export const revalidatePage: CollectionAfterChangeHook<Page> = ({
     payload.logger.info(`Revalidating page at path: ${path}`)
 
     revalidatePath(path)
+    // Also revalidate the root path to update footer
+    revalidatePath('/', 'layout')
   }
 
   // If the page was previously published, we need to revalidate the old path
@@ -28,6 +35,8 @@ export const revalidatePage: CollectionAfterChangeHook<Page> = ({
     payload.logger.info(`Revalidating old page at path: ${oldPath}`)
 
     revalidatePath(oldPath)
+    // Also revalidate the root path to update footer
+    revalidatePath('/', 'layout')
   }
 
   return doc

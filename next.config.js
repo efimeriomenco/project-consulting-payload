@@ -21,8 +21,29 @@ const nextConfig = {
       }),
     ],
   },
-  reactStrictMode: true,
+  reactStrictMode: false,
   redirects,
+  // Improve HMR/Fast Refresh
+  webpack: (config, { dev, isServer }) => {
+    if (dev) {
+      // Enable faster refresh
+      config.optimization = {
+        ...config.optimization,
+        removeAvailableModules: false,
+        removeEmptyChunks: false,
+        splitChunks: false,
+      }
+      
+      if (!isServer) {
+        config.watchOptions = {
+          poll: 1000,
+          aggregateTimeout: 300,
+          ignored: ['**/node_modules', '**/.git', '**/.next'],
+        }
+      }
+    }
+    return config
+  },
 }
 
 export default withNextIntl(withPayload(nextConfig))

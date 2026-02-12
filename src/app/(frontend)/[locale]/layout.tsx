@@ -3,7 +3,28 @@ import type { Metadata } from 'next'
 import { cn } from '@/utilities/ui'
 import { GeistMono } from 'geist/font/mono'
 import { GeistSans } from 'geist/font/sans'
+import { Libre_Franklin, Poppins, Montserrat } from 'next/font/google'
 import React from 'react'
+
+const libreFranklin = Libre_Franklin({
+  subsets: ['latin'],
+  variable: '--font-libre-franklin',
+  display: 'swap',
+})
+
+const poppins = Poppins({
+  subsets: ['latin'],
+  weight: ['100', '200', '300', '400', '500', '600', '700', '800', '900'],
+  variable: '--font-poppins',
+  display: 'swap',
+})
+
+const montserrat = Montserrat({
+  subsets: ['latin'],
+  weight: ['100', '200', '300', '400', '500', '600', '700', '800', '900'],
+  variable: '--font-montserrat',
+  display: 'swap',
+})
 
 import { Footer } from '@/globals/Footer/Component'
 import { Header } from '@/globals/Header/Component'
@@ -31,7 +52,7 @@ type Args = {
 export default async function RootLayout({ children, params }: Args) {
   const { locale } = await params
   const currentLocale = localization.locales.find((loc) => loc.code === locale)
-  const direction = currentLocale?.rtl ? 'rtl' : 'ltr'
+  const direction = (currentLocale as any)?.rtl ? 'rtl' : 'ltr'
 
   if (!routing.locales.includes(locale as any)) {
     notFound()
@@ -43,7 +64,7 @@ export default async function RootLayout({ children, params }: Args) {
 
   return (
     <html
-      className={cn(GeistSans.variable, GeistMono.variable)}
+      className={cn(GeistSans.variable, GeistMono.variable, libreFranklin.variable, poppins.variable, montserrat.variable, 'overflow-x-hidden')}
       lang={locale}
       dir={direction}
       suppressHydrationWarning
@@ -54,14 +75,16 @@ export default async function RootLayout({ children, params }: Args) {
         <link href="/favicon.svg" rel="icon" type="image/svg+xml" />
       </head>
       <body>
+        <main>
         <Providers>
           <NextIntlClientProvider messages={messages}>
-            <LivePreviewListener />
+            {process.env.NODE_ENV === 'production' && <LivePreviewListener />}
             <Header locale={locale} />
             {children}
             <Footer locale={locale} />
           </NextIntlClientProvider>
         </Providers>
+        </main>
       </body>
     </html>
   )

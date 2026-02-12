@@ -67,6 +67,25 @@ export const Posts: CollectionConfig = {
       required: true,
     },
     {
+      name: 'featuredImage',
+      type: 'upload',
+      relationTo: 'media',
+      label: 'Featured Image',
+      admin: {
+        description: 'This image will be displayed on post cards and at the top of the post (optional).',
+      },
+    },
+    {
+      name: 'excerpt',
+      type: 'textarea',
+      label: 'Short Description / Excerpt',
+      localized: true,
+      required: true,
+      admin: {
+        description: 'A short summary displayed on post cards (2-3 sentences recommended).',
+      },
+    },
+    {
       type: 'tabs',
       tabs: [
         {
@@ -112,13 +131,24 @@ export const Posts: CollectionConfig = {
               relationTo: 'posts',
             },
             {
-              name: 'categories',
-              type: 'relationship',
+              name: 'relatedPostsTitle',
+              type: 'text',
+              label: 'Related Posts Section Title',
+              localized: true,
               admin: {
                 position: 'sidebar',
+                description: 'Title for the related posts section (e.g., "Articole conexe")',
               },
-              hasMany: true,
-              relationTo: 'categories',
+            },
+            {
+              name: 'relatedPostsReadMoreLabel',
+              type: 'text',
+              label: 'Related Posts Read More Label',
+              localized: true,
+              admin: {
+                position: 'sidebar',
+                description: 'Label for the read more button (e.g., "Citește mai mult")',
+              },
             },
           ],
           label: 'Meta',
@@ -212,11 +242,7 @@ export const Posts: CollectionConfig = {
     afterRead: [populateAuthors],
   },
   versions: {
-    drafts: {
-      autosave: {
-        interval: 100, // We set this interval for optimal live preview
-      },
-    },
+    drafts: true,
     maxPerDoc: 50,
   },
 }

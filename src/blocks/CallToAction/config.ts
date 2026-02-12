@@ -1,40 +1,62 @@
 import type { Block } from 'payload'
 
-import {
-  FixedToolbarFeature,
-  HeadingFeature,
-  InlineToolbarFeature,
-  lexicalEditor,
-} from '@payloadcms/richtext-lexical'
-
-import { linkGroup } from '../../fields/linkGroup'
-
 export const CallToAction: Block = {
   slug: 'cta',
   interfaceName: 'CallToActionBlock',
   fields: [
     {
-      name: 'richText',
-      type: 'richText',
+      name: 'title',
+      type: 'text',
+      label: 'Title',
       localized: true,
-      editor: lexicalEditor({
-        features: ({ rootFeatures }) => {
-          return [
-            ...rootFeatures,
-            HeadingFeature({ enabledHeadingSizes: ['h1', 'h2', 'h3', 'h4'] }),
-            FixedToolbarFeature(),
-            InlineToolbarFeature(),
-          ]
-        },
-      }),
-      label: false,
+      required: true,
     },
-    linkGroup({
-      appearances: ['default', 'outline'],
-      overrides: {
-        maxRows: 2,
-      },
-    }),
+    {
+      name: 'description',
+      type: 'textarea',
+      label: 'Description',
+      localized: true,
+    },
+    {
+      name: 'primaryButton',
+      type: 'group',
+      label: 'Primary Button',
+      fields: [
+        {
+          name: 'label',
+          type: 'text',
+          label: 'Button Text',
+          localized: true,
+          defaultValue: 'Programează consultație',
+        },
+        {
+          name: 'form',
+          type: 'relationship',
+          relationTo: 'forms',
+          label: 'Form (opens as popup)',
+        },
+      ],
+    },
+    {
+      name: 'secondaryButton',
+      type: 'group',
+      label: 'Secondary Button',
+      fields: [
+        {
+          name: 'label',
+          type: 'text',
+          label: 'Button Text',
+          localized: true,
+          defaultValue: 'Contactează-ne',
+        },
+        {
+          name: 'form',
+          type: 'relationship',
+          relationTo: 'forms',
+          label: 'Form (opens as popup)',
+        },
+      ],
+    },
   ],
   labels: {
     plural: 'Calls to Action',

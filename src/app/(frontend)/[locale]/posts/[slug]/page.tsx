@@ -1,7 +1,6 @@
 import type { Metadata } from 'next'
 
 import { RelatedPosts } from '@/blocks/RelatedPosts/Component'
-import { PayloadRedirects } from '@/components/PayloadRedirects'
 import configPromise from '@payload-config'
 import { getPayload } from 'payload'
 import { draftMode } from 'next/headers'
@@ -14,6 +13,7 @@ import { PostHero } from '@/heros/PostHero'
 import { generateMeta } from '@/utilities/generateMeta'
 import PageClient from './page.client'
 import { TypedLocale } from 'payload'
+import { PageHeader } from '@/heros/PageHeader'
 
 export async function generateStaticParams() {
   const payload = await getPayload({ config: configPromise })
@@ -39,23 +39,20 @@ type Args = {
 }
 
 export default async function Post({ params: paramsPromise }: Args) {
-  const { slug = '', locale = 'en' } = await paramsPromise
+  const { slug = '', locale = 'ro' } = await paramsPromise
   const url = '/posts/' + slug
   const post = await queryPost({ slug, locale })
 
-  if (!post) return <PayloadRedirects url={url} />
+  if (!post) return null
 
   return (
-    <article className="pt-16 pb-16">
+    <article>
       <PageClient />
 
-      {/* Allows redirects for valid pages too */}
-      <PayloadRedirects disableNotFound url={url} />
+      <PageHeader type="pageHeader" pageHeaderTitle={post.title} />
 
-      <PostHero post={post} />
-
-      <div className="flex flex-col items-center gap-4 pt-8">
-        <div className="container lg:mx-0 lg:grid lg:grid-cols-[1fr_48rem_1fr] grid-rows-[1fr]">
+      <div className="flex flex-col items-center container mx-auto my-16">
+        <div className="lg:mx-0 lg:grid lg:grid-cols-[1fr_48rem_1fr] grid-rows-[1fr]">
           <RichText
             className="lg:grid lg:grid-cols-subgrid col-start-1 col-span-3 grid-rows-[1fr]"
             content={post.content}
@@ -63,10 +60,14 @@ export default async function Post({ params: paramsPromise }: Args) {
           />
         </div>
 
+        {/* Related Posts */}
         {post.relatedPosts && post.relatedPosts.length > 0 && (
           <RelatedPosts
             className="mt-12"
-            docs={post.relatedPosts.filter((post) => typeof post === 'object')}
+            docs={post.relatedPosts.filter((post) => typeof post === 'object') as Post[]}
+            title={post.relatedPostsTitle && post.relatedPostsTitle.trim() ? post.relatedPostsTitle : 'Articole conexe'}
+            readMoreLabel={post.relatedPostsReadMoreLabel && post.relatedPostsReadMoreLabel.trim() ? post.relatedPostsReadMoreLabel : 'Citește mai mult'}
+            contentType="posts"
           />
         )}
       </div>
@@ -75,7 +76,7 @@ export default async function Post({ params: paramsPromise }: Args) {
 }
 
 export async function generateMetadata({ params: paramsPromise }: Args): Promise<Metadata> {
-  const { slug = '', locale = 'en' } = await paramsPromise
+  const { slug = '', locale = 'ro' } = await paramsPromise
   const post = await queryPost({ slug, locale })
 
   return generateMeta({ doc: post })
@@ -92,6 +93,7 @@ const queryPost = cache(async ({ slug, locale }: { slug: string; locale: TypedLo
     limit: 1,
     overrideAccess: draft,
     locale,
+    depth: 2,
     where: {
       slug: {
         equals: slug,

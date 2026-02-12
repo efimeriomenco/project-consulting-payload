@@ -49,6 +49,10 @@ export const link: LinkType = ({ appearances, disableLabel = false, overrides = 
                 label: 'Custom URL',
                 value: 'custom',
               },
+              {
+                label: 'Phone',
+                value: 'phone',
+              },
             ],
           },
           {
@@ -76,7 +80,7 @@ export const link: LinkType = ({ appearances, disableLabel = false, overrides = 
       },
       label: 'Document to link to',
       maxDepth: 1,
-      relationTo: ['pages'],
+      relationTo: ['pages', 'posts'],
       required: true,
     },
     {
@@ -86,6 +90,16 @@ export const link: LinkType = ({ appearances, disableLabel = false, overrides = 
         condition: (_, siblingData) => siblingData?.type === 'custom',
       },
       label: 'Custom URL',
+      required: true,
+    },
+    {
+      name: 'phone',
+      type: 'text',
+      admin: {
+        condition: (_, siblingData) => siblingData?.type === 'phone',
+        description: 'Enter phone number (e.g., +1 866 549 4088). It will be formatted as tel: link automatically.',
+      },
+      label: 'Phone Number',
       required: true,
     },
   ]
@@ -109,8 +123,9 @@ export const link: LinkType = ({ appearances, disableLabel = false, overrides = 
           type: 'text',
           admin: {
             width: '50%',
+            description: 'Custom text displayed in the menu (independent of page title)',
           },
-          label: 'Label',
+          label: 'Menu Label',
           required: true,
         },
       ],

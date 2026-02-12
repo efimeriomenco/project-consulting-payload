@@ -1,6 +1,7 @@
 import jwt from 'jsonwebtoken'
 import { draftMode } from 'next/headers'
 import { redirect } from 'next/navigation'
+import { NextRequest } from 'next/server'
 import { getPayload } from 'payload'
 import configPromise from '@payload-config'
 import { CollectionSlug, TypedLocale } from 'payload'
@@ -8,13 +9,7 @@ import { CollectionSlug, TypedLocale } from 'payload'
 const payloadToken = 'payload-token'
 
 export async function GET(
-  req: Request & {
-    cookies: {
-      get: (name: string) => {
-        value: string
-      }
-    }
-  },
+  req: NextRequest,
 ): Promise<Response> {
   const payload = await getPayload({ config: configPromise })
   const token = req.cookies.get(payloadToken)?.value
@@ -41,11 +36,11 @@ export async function GET(
     }
 
     if (!token) {
-      new Response('You are not allowed to preview this page', { status: 403 })
+      return new Response('You are not allowed to preview this page', { status: 403 })
     }
 
     if (!path.startsWith('/')) {
-      new Response('This endpoint can only be used for internal previews', { status: 500 })
+      return new Response('This endpoint can only be used for internal previews', { status: 500 })
     }
 
     let user

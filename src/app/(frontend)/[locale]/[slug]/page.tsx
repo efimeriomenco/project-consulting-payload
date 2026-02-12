@@ -1,11 +1,9 @@
 import type { Metadata } from 'next'
 
-import { PayloadRedirects } from '@/components/PayloadRedirects'
 import configPromise from '@payload-config'
 import { getPayload } from 'payload'
 import { draftMode } from 'next/headers'
 import React, { cache } from 'react'
-import { homeStatic } from '@/endpoints/seed/home-static'
 
 import type { Page as PageType } from '@/payload-types'
 
@@ -43,7 +41,7 @@ type Args = {
 }
 
 export default async function Page({ params: paramsPromise }: Args) {
-  const { slug = 'home', locale = 'en' } = await paramsPromise
+  const { slug = 'home', locale = 'ro' } = await paramsPromise
   const url = '/' + slug
 
   let page: PageType | null
@@ -53,31 +51,23 @@ export default async function Page({ params: paramsPromise }: Args) {
     locale,
   })
 
-  // Remove this code once your website is seeded
-  if (!page && slug === 'home') {
-    page = homeStatic
-  }
-
   if (!page) {
-    return <PayloadRedirects url={url} />
+    return null
   }
 
   const { hero, layout } = page
 
   return (
-    <article className="pt-16 pb-24">
+    <>
       <PageClient />
-      {/* Allows redirects for valid pages too */}
-      <PayloadRedirects disableNotFound url={url} />
-
       <RenderHero {...hero} />
       <RenderBlocks blocks={layout} locale={locale} />
-    </article>
+    </>
   )
 }
 
 export async function generateMetadata({ params: paramsPromise }): Promise<Metadata> {
-  const { slug = 'home', locale = 'en' } = await paramsPromise
+  const { slug = 'home', locale = 'ro' } = await paramsPromise
   const page = await queryPage({
     slug,
     locale,

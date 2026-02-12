@@ -127,7 +127,7 @@ export const FormBlock: React.FC<
   )
 
   return (
-    <div className="container lg:max-w-[48rem] pb-20">
+    <div className="container lg:max-w-[48rem]">
       <FormProvider {...formMethods}>
         {enableIntro && introContent && !hasSubmitted && (
           <RichText className="mb-8" content={introContent} enableGutter={false} />
@@ -138,15 +138,39 @@ export const FormBlock: React.FC<
         {isLoading && !hasSubmitted && <p>{t('loading')}</p>}
         {error && <div>{`${error.status || '500'}: ${error.message || ''}`}</div>}
         {!hasSubmitted && (
-          <form id={formID} onSubmit={handleSubmit(onSubmit)}>
-            <div className="mb-4 last:mb-0">
+          <form id={formID} onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+            <div className="flex flex-wrap gap-4">
               {formFromProps &&
                 formFromProps.fields &&
                 formFromProps.fields?.map((field, index) => {
                   const Field: React.FC<any> = fields?.[field.blockType]
                   if (Field) {
+                    // Get field width from admin config, default to 100 for full width
+                    const fieldWidth = (field as any).width || 100
+                    
+                    // Force full width for certain field types
+                    const forceFullWidth = 
+                      index === 0 ||
+                      field.blockType === 'textarea' || 
+                      field.blockType === 'checkbox'
+                    
+                    const width = forceFullWidth ? 100 : fieldWidth
+                    
+                    // Calculate flex basis accounting for gap (16px = 1rem)
+                    const flexBasis = width === 100 
+                      ? '100%' 
+                      : `calc(${width}% - 0.5rem)`
+                    
                     return (
-                      <div className="mb-6 last:mb-0" key={index}>
+                      <div 
+                        key={index}
+                        className="min-w-0"
+                        style={{ 
+                          flexBasis,
+                          flexGrow: width === 100 ? 1 : 0,
+                          flexShrink: 0,
+                        }}
+                      >
                         <Field
                           form={formFromProps}
                           {...field}
@@ -162,7 +186,7 @@ export const FormBlock: React.FC<
                 })}
             </div>
 
-            <Button form={formID} type="submit" variant="default">
+            <Button form={formID} type="submit" variant="default" className="w-full bg-[#253C6A]">
               {submitButtonLabel}
             </Button>
           </form>

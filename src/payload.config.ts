@@ -1,11 +1,9 @@
 // storage-adapter-import-placeholder
-import { mongooseAdapter } from '@payloadcms/db-mongodb'
+import { vercelBlobStorage } from '@payloadcms/storage-vercel-blob'
+import { postgresAdapter } from '@payloadcms/db-postgres'
 import { payloadCloudPlugin } from '@payloadcms/payload-cloud'
 import { formBuilderPlugin } from '@payloadcms/plugin-form-builder'
-import { nestedDocsPlugin } from '@payloadcms/plugin-nested-docs'
-import { redirectsPlugin } from '@payloadcms/plugin-redirects'
 import { seoPlugin } from '@payloadcms/plugin-seo'
-import { searchPlugin } from '@payloadcms/plugin-search'
 import {
   BoldFeature,
   FixedToolbarFeature,
@@ -20,20 +18,15 @@ import path from 'path'
 import { buildConfig } from 'payload'
 import { fileURLToPath } from 'url'
 
-import Categories from './collections/Categories'
 import { Media } from './collections/Media'
 import { Pages } from './collections/Pages'
 import { Posts } from './collections/Posts'
 import Users from './collections/Users'
-import { seedHandler } from './endpoints/seedHandler'
 import { Footer } from './globals/Footer/config'
 import { Header } from './globals/Header/config'
-import { revalidateRedirects } from './hooks/revalidateRedirects'
 import { GenerateTitle, GenerateURL } from '@payloadcms/plugin-seo/types'
 import { Page, Post } from 'src/payload-types'
 
-import { searchFields } from '@/search/fieldOverrides'
-import { beforeSyncWithSearch } from '@/search/beforeSync'
 import localization from './i18n/localization'
 
 const filename = fileURLToPath(import.meta.url)
@@ -122,48 +115,21 @@ export default buildConfig({
       ]
     },
   }),
-  db: mongooseAdapter({
-    url: process.env.DATABASE_URL || '',
+  db: postgresAdapter({
+    pool: {
+      connectionString: process.env.DATABASE_URL || '',
+      max: 20,
+      idleTimeoutMillis: 30000,
+      connectionTimeoutMillis: 10000,
+    },
   }),
-  collections: [Pages, Posts, Media, Categories, Users],
+  collections: [Pages, Posts, Media, Users],
   cors: [process.env.PAYLOAD_PUBLIC_SERVER_URL || ''].filter(Boolean),
   csrf: [process.env.PAYLOAD_PUBLIC_SERVER_URL || ''].filter(Boolean),
   endpoints: [
-    // The seed endpoint is used to populate the database with some example data
-    // You should delete this endpoint before deploying your site to production
-    {
-      handler: seedHandler,
-      method: 'get',
-      path: '/seed',
-    },
   ],
   globals: [Header, Footer],
   plugins: [
-    redirectsPlugin({
-      collections: ['pages', 'posts'],
-      overrides: {
-        // @ts-expect-error
-        fields: ({ defaultFields }) => {
-          return defaultFields.map((field) => {
-            if ('name' in field && field.name === 'from') {
-              return {
-                ...field,
-                admin: {
-                  description: 'You will need to rebuild the website when changing this field.',
-                },
-              }
-            }
-            return field
-          })
-        },
-        hooks: {
-          afterChange: [revalidateRedirects],
-        },
-      },
-    }),
-    nestedDocsPlugin({
-      collections: ['categories'],
-    }),
     seoPlugin({
       generateTitle,
       generateURL,
@@ -172,12 +138,34 @@ export default buildConfig({
       fields: {
         payment: false,
       },
+      formSubmissionOverrides: {
+        admin: {
+          defaultColumns: ['form', 'createdAt'],
+        },
+        fields: ({ defaultFields }) => {
+          return defaultFields.map((field) => {
+            if ('name' in field && field.name === 'submissionData') {
+              return {
+                ...field,
+                admin: {
+                  ...('admin' in field ? field.admin : {}),
+                  components: {
+                    Field: '@/components/FormSubmissionData',
+                  },
+                },
+              } as typeof field
+            }
+            return field
+          })
+        },
+      },
       formOverrides: {
         fields: ({ defaultFields }) => {
           return defaultFields.map((field) => {
             if ('name' in field && field.name === 'confirmationMessage') {
               return {
                 ...field,
+                required: false,
                 editor: lexicalEditor({
                   features: ({ rootFeatures }) => {
                     return [
@@ -192,16 +180,70 @@ export default buildConfig({
             return field
           })
         },
-      },
-    }),
-    searchPlugin({
-      collections: ['posts'],
-      beforeSync: beforeSyncWithSearch,
-      searchOverrides: {
-        fields: ({ defaultFields }) => {
-          return [...defaultFields, ...searchFields]
+        hooks: {
+          beforeChange: [
+            ({ data, operation, req }) => {
+              // Set default fields for new forms
+              if (operation === 'create' && (!data.fields || data.fields.length === 0)) {
+                data.fields = [
+                  {
+                    blockType: 'text',
+                    name: 'name',
+                    label: 'Nume/Prenume',
+                    placeholder: 'Nume/Prenume',
+                    required: true,
+                    width: 100,
+                  },
+                  {
+                    blockType: 'email',
+                    name: 'email',
+                    label: 'Adresa electronică',
+                    placeholder: 'Adresa electronică',
+                    required: true,
+                    width: 50,
+                  },
+                  {
+                    blockType: 'text',
+                    name: 'phone',
+                    label: 'Telefon',
+                    placeholder: 'Telefon',
+                    required: true,
+                    width: 50,
+                  },
+                  {
+                    blockType: 'textarea',
+                    name: 'message',
+                    label: 'Mesaj',
+                    placeholder: 'Mesaj',
+                    required: true,
+                    width: 100,
+                  },
+                  {
+                    blockType: 'checkbox',
+                    name: 'consent',
+                    label: 'Sunt de acord cu prelucrarea datelor personale.',
+                    required: true,
+                    defaultValue: false,
+                    width: 100,
+                  },
+                ]
+              }
+              // Set default submit button label
+              if (operation === 'create' && !data.submitButtonLabel) {
+                data.submitButtonLabel = 'Primește consultare'
+              }
+              return data
+            },
+          ],
         },
+      },    
+    }),
+    vercelBlobStorage({
+      enabled: true,
+      collections: {
+        media: true,
       },
+      token: process.env.BLOB_READ_WRITE_TOKEN || '',
     }),
     payloadCloudPlugin(), // storage-adapter-placeholder
   ],

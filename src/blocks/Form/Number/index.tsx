@@ -15,15 +15,17 @@ export const Number: React.FC<
       }>
     >
     register: UseFormRegister<FieldValues>
+    placeholder?: string
   }
-> = ({ name, defaultValue, errors, label, register, required: requiredFromProps, width }) => {
+> = ({ name, defaultValue, errors, label, register, required: requiredFromProps, width, placeholder }) => {
   return (
     <Width width={width}>
-      <Label htmlFor={name}>{label}</Label>
+      <Label htmlFor={name} className="sr-only">{label}</Label>
       <Input
         defaultValue={defaultValue}
         id={name}
         type="number"
+        placeholder={placeholder || label}
         {...register(name, { required: requiredFromProps })}
       />
       {requiredFromProps && errors[name] && <Error />}

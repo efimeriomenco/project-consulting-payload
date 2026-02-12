@@ -7,8 +7,6 @@ import { draftMode } from 'next/headers'
 import React, { cache } from 'react'
 import { generateMeta } from '@/utilities/generateMeta'
 import { TypedLocale } from 'payload'
-import { PayloadRedirects } from '@/components/PayloadRedirects'
-import { homeStatic } from '@/endpoints/seed/home-static'
 import type { Page as PageType } from '@/payload-types'
 import { RenderBlocks } from '@/blocks/RenderBlocks'
 import { RenderHero } from '@/heros/RenderHero'
@@ -22,7 +20,7 @@ type Args = {
 }
 
 export default async function Page({ params: paramsPromise }: Args) {
-  const { slug = 'home', locale = 'en' } = await paramsPromise
+  const { slug = 'home', locale = 'ro' } = await paramsPromise
   const url = '/' + slug
 
   let page: PageType | null
@@ -32,30 +30,23 @@ export default async function Page({ params: paramsPromise }: Args) {
     locale,
   })
 
-  // Remove this code once your website is seeded
-  if (!page && slug === 'home') {
-    page = homeStatic
-  }
-
   if (!page) {
-    return <PayloadRedirects url={url} />
+    return null
   }
 
   const { hero, layout } = page
 
   return (
-    <article className="pt-16 pb-24">
+    <>
       <PageClient />
-      <PayloadRedirects disableNotFound url={url} />
-
       <RenderHero {...hero} />
       <RenderBlocks blocks={layout} locale={locale} />
-    </article>
+    </>
   )
 }
 
 export async function generateMetadata({ params }: Args): Promise<Metadata> {
-  const { locale = 'en', slug = 'home' } = await params
+  const { locale = 'ro', slug = 'home' } = await params
   const page = await queryPage({
     locale,
     slug,

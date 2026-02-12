@@ -1,11 +1,13 @@
 import Script from 'next/script'
 import React from 'react'
 
-import { defaultTheme, themeLocalStorageKey } from '../ThemeSelector/types'
+import { defaultTheme, themeLocalStorageKey } from '../shared'
 
 export const InitTheme: React.FC = () => {
+  // Use afterInteractive in development to avoid HMR issues
+  const strategy = process.env.NODE_ENV === 'development' ? 'afterInteractive' : 'beforeInteractive'
+  
   return (
-    // eslint-disable-next-line @next/next/no-before-interactive-script-outside-document
     <Script
       dangerouslySetInnerHTML={{
         __html: `
@@ -44,7 +46,7 @@ export const InitTheme: React.FC = () => {
   `,
       }}
       id="theme-script"
-      strategy="beforeInteractive"
+      strategy={strategy as any}
     />
   )
 }

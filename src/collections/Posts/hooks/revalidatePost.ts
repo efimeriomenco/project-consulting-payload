@@ -9,6 +9,11 @@ export const revalidatePost: CollectionAfterChangeHook<Post> = ({
   previousDoc,
   req: { payload, locale },
 }) => {
+  // Skip revalidation in development to prevent HMR issues
+  if (process.env.NODE_ENV === 'development') {
+    return doc
+  }
+
   if (!locale && payload.config.localization) {
     locale = payload.config.localization.defaultLocale as Config['locale']
   }

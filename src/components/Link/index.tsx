@@ -12,12 +12,13 @@ type CMSLinkType = {
   className?: string
   label?: string | null
   newTab?: boolean | null
+  phone?: string | null
   reference?: {
     relationTo: 'pages' | 'posts'
     value: Page | Post | string | number
   } | null
   size?: ButtonProps['size'] | null
-  type?: 'custom' | 'reference' | null
+  type?: 'custom' | 'reference' | 'phone' | null
   url?: string | null
 }
 
@@ -29,30 +30,67 @@ export const CMSLink: React.FC<CMSLinkType> = (props) => {
     className,
     label,
     newTab,
+    phone,
     reference,
     size: sizeFromProps,
     url,
   } = props
 
-  const href =
-    type === 'reference' && typeof reference?.value === 'object' && reference.value.slug
-      ? `${reference?.relationTo !== 'pages' ? `/${reference?.relationTo}` : ''}/${
+  let href: string | null = null
+
+  if (type === 'phone' && phone) {
+    // Format phone number as tel: link
+    href = `tel:${phone.replace(/\s+/g, '').replace(/[^\d+]/g, '')}`
+  } else if (type === 'reference' && typeof reference?.value === 'object' && reference.value.slug) {
+    href = `${reference?.relationTo !== 'pages' ? `/${reference?.relationTo}` : ''}/${
           reference.value.slug
         }`
-      : url
+  } else if (type === 'custom' && url) {
+    // If custom URL is already a tel: or mailto: link, use it as-is
+    // Otherwise, treat it as a regular URL
+    href = url
+  } else if (url) {
+    // Fallback for backward compatibility
+    href = url
+  }
 
   if (!href) return null
 
-  const finalHref = href || url || ''
-  const Link = finalHref.startsWith('/admin') ? NextLink : i18nLink
+  // Check if it's a protocol link (tel:, mailto:, http:, https:)
+  const isProtocolLink = /^(tel:|mailto:|http:|https:)/i.test(href)
+  const isAdminLink = href.startsWith('/admin')
 
   const size = appearance === 'link' ? 'clear' : sizeFromProps
   const newTabProps = newTab ? { rel: 'noopener noreferrer', target: '_blank' } : {}
 
+  // For protocol links (tel:, mailto:) or admin links, use regular <a> tag
+  if (isProtocolLink || isAdminLink) {
+    if (appearance === 'inline') {
+      return (
+        <a className={cn(className)} href={href} {...newTabProps}>
+          {label && label}
+          {children && children}
+        </a>
+      )
+    }
+
+    return (
+      <Button asChild className={className} size={size} variant={appearance}>
+        <a className={cn(className)} href={href} {...newTabProps}>
+          {label && label}
+          {children && children}
+        </a>
+      </Button>
+    )
+  }
+
+  // For internal links, use Next.js Link
+  const Link = isAdminLink ? NextLink : i18nLink
+
   /* Ensure we don't break any styles set by richText */
   if (appearance === 'inline') {
     return (
-      <Link className={cn(className)} href={finalHref} {...newTabProps}>
+      <Link className={cn(className)} href={href} {...newTabProps}>
         {label && label}
         {children && children}
       </Link>
@@ -61,7 +99,7 @@ export const CMSLink: React.FC<CMSLinkType> = (props) => {
 
   return (
     <Button asChild className={className} size={size} variant={appearance}>
-      <Link className={cn(className)} href={finalHref} {...newTabProps}>
+      <Link className={cn(className)} href={href} {...newTabProps}>
         {label && label}
         {children && children}
       </Link>
