@@ -233,8 +233,6 @@ export interface Media {
   filesize?: number | null;
   width?: number | null;
   height?: number | null;
-  focalX?: number | null;
-  focalY?: number | null;
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
@@ -1425,8 +1423,6 @@ export interface MediaSelect<T extends boolean = true> {
   filesize?: T;
   width?: T;
   height?: T;
-  focalX?: T;
-  focalY?: T;
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
@@ -1650,6 +1646,10 @@ export interface Header {
    * Upload the logo image for the header
    */
   logo?: (number | null) | Media;
+  /**
+   * Upload the tab icon (favicon) that appears in browser tabs. Recommended size: 32x32px or 16x16px.
+   */
+  tabIcon?: (number | null) | Media;
   /**
    * The text displayed on the menu button (e.g., "Meniu", "Menu", "Меню")
    */
@@ -1889,6 +1889,7 @@ export interface Footer {
  */
 export interface HeaderSelect<T extends boolean = true> {
   logo?: T;
+  tabIcon?: T;
   menuLabel?: T;
   navItems?:
     | T

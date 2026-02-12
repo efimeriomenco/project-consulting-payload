@@ -1,5 +1,3 @@
-import type { Metadata } from 'next'
-
 import { cn } from '@/utilities/ui'
 import { GeistMono } from 'geist/font/mono'
 import { GeistSans } from 'geist/font/sans'
@@ -34,6 +32,8 @@ import { InitTheme } from '@/providers/Theme/InitTheme'
 import { mergeOpenGraph } from '@/utilities/mergeOpenGraph'
 import { draftMode } from 'next/headers'
 import { TypedLocale } from 'payload'
+import { getCachedGlobal } from '@/utilities/getGlobals'
+import type { Header as HeaderType } from '@/payload-types'
 
 import './globals.css'
 import { getMessages, setRequestLocale } from 'next-intl/server'
@@ -61,6 +61,32 @@ export default async function RootLayout({ children, params }: Args) {
 
   const { isEnabled } = await draftMode()
   const messages = await getMessages()
+  const header = (await getCachedGlobal('header', 1, locale)()) as HeaderType
+
+  // Get tab icon URL if available
+  let tabIconUrl: string | null = null
+  let tabIconType: string | null = null
+
+  if (
+    header?.tabIcon &&
+    typeof header.tabIcon === 'object' &&
+    'url' in header.tabIcon &&
+    header.tabIcon.url
+  ) {
+    tabIconUrl = `${process.env.NEXT_PUBLIC_SERVER_URL || ''}${header.tabIcon.url}`
+    
+    // Detect file type from URL
+    const url = header.tabIcon.url.toLowerCase()
+    if (url.endsWith('.svg')) {
+      tabIconType = 'image/svg+xml'
+    } else if (url.endsWith('.ico')) {
+      tabIconType = 'image/x-icon'
+    } else if (url.endsWith('.png')) {
+      tabIconType = 'image/png'
+    } else {
+      tabIconType = 'image/png' // default
+    }
+  }
 
   return (
     <html
@@ -71,8 +97,12 @@ export default async function RootLayout({ children, params }: Args) {
     >
       <head>
         <InitTheme />
-        <link href="/favicon.ico" rel="icon" sizes="32x32" />
-        <link href="/favicon.svg" rel="icon" type="image/svg+xml" />
+        {tabIconUrl && (
+          <>
+            <link href={tabIconUrl} rel="icon" type={tabIconType || 'image/png'} />
+            <link href={tabIconUrl} rel="shortcut icon" />
+          </>
+        )}
       </head>
       <body>
         <main>
@@ -88,15 +118,6 @@ export default async function RootLayout({ children, params }: Args) {
       </body>
     </html>
   )
-}
-
-export const metadata: Metadata = {
-  metadataBase: new URL(process.env.NEXT_PUBLIC_SERVER_URL || 'https://payloadcms.com'),
-  openGraph: mergeOpenGraph(),
-  twitter: {
-    card: 'summary_large_image',
-    creator: '@payloadcms',
-  },
 }
 
 export function generateStaticParams() {

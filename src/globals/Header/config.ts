@@ -20,6 +20,15 @@ export const Header: GlobalConfig = {
       },
     },
     {
+      name: 'tabIcon',
+      type: 'upload',
+      relationTo: 'media',
+      label: 'Tab Icon',
+      admin: {
+        description: 'Upload the tab icon (favicon) that appears in browser tabs. Recommended size: 32x32px or 16x16px.',
+      },
+    },
+    {
       name: 'menuLabel',
       type: 'text',
       label: 'Menu Label',
